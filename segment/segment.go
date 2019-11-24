@@ -56,9 +56,9 @@ func GenerateMatrix(amount int, maxWeight float64) []Segment {
 	}
 
 	for vid, value := range result {
-		for _, next := range result {
+		for nid, next := range result {
 			if (next.Start == value.End && next.End != value.Start) {
-				result[vid].AddLink(&next);
+				result[vid].AddLink(&result[nid])
 			}
 		}
 	}
