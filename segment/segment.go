@@ -8,9 +8,10 @@ import (
 // Segment is a basic rib in the Jobs graph
 type Segment struct {
 	ID         int        // Segment code
-	Start, End int     // Start and End of segment. Basically - graph points
+	Start, End int    	  // Start and End of segment. Basically - graph points
 	Weight     float64    // Segment weight, for example, time to switch a job
 	Links      []*Segment // Array of pointers to segments which we can travel to from the current one
+	Disabled   bool		  // Is segment already processed
 }
 
 func New(id int, start int, end int, weight ...float64) Segment{

@@ -1,39 +1,57 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
 
-// Segment is a basic rib in the Jobs graph
-type Segment struct {
-	ID         int        // Segment code
-	Start, End string     // Start and End of segment. Basically - graph points
-	Weight     float64    // Segment weight, for example, time to switch a job
-	Links      []*Segment // Array of pointers to segments which we can travel to from the current one
-}
+	"github.com/baubletech/traveling-gopher/segment"
+)
 
-// PrepareExampleSegments prepares example segments slice
-func PrepareExampleSegments() []Segment {
-	var segments []Segment
+func buildChain(segments []segment.Segment, start int) (result []*segment.Segment) {
+	// Get a starting segment
+	seg := &segments[start]
+	segLinks := seg.Links
+	result = append(result, seg)
 
-	segments = append(segments, Segment{
-		ID:     1,
-		Start:  "a1",
-		End:    "a2",
-		Weight: 3,
-		Links:  make([]*Segment, 2),
-	})
+	for {
+		// Check links are enabled, break otherwise
+		var availableLinks []*segment.Segment
+		for _, value := range segLinks {
+			if !value.Disabled {
+				availableLinks = append(availableLinks, value)
+			}
+		}
+		if len(availableLinks) == 0 {
+			break
+		}
 
-	segments = append(segments, Segment{
-		ID:     9,
-		Start:  "a2",
-		End:    "a3",
-		Weight: 4,
-		Links:  make([]*Segment, 2),
-	})
+		// Choose correct path + disable them
+		minWeightSeg := availableLinks[0]
+		for _, value := range availableLinks {
+			value.Disabled = true
+			if minWeightSeg.Weight > value.Weight {
+				minWeightSeg = value
+			}
+		}
 
-	return segments
+		// Get to next linked segment
+		seg = minWeightSeg
+		segLinks = seg.Links
+		result = append(result, seg)
+	}
+
+	return result
 }
 
 func main() {
-	segments := PrepareExampleSegments()
+	segments := segment.GenerateMatrix(5, 5.0)
 	fmt.Println(segments)
+
+	builtSegments := buildChain(segments, 0)
+	fmt.Println(builtSegments)
+
+	var result []int
+	for _, value := range builtSegments {
+		result = append(result, value.ID)
+	}
+	fmt.Println(result)
 }
