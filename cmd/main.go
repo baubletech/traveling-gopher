@@ -1,7 +1,12 @@
 package main
 
 import (
+	"strings"
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"log"
 
 	"github.com/baubletech/traveling-gopher/segment"
 )
@@ -185,20 +190,12 @@ func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *Bes
 	return best
 }
 
-func main() {
-	// Size of matrix
-	n := 6
-
+func outputFullReport(n int) {
 	initial := segment.GenerateInitialMatrix(n, 10.0)
-
 	segments := segment.GenerateMatrix(initial)
 
 	segment.ShowInitialMatrix(initial)
 	segment.ShowMatrix(segments)
-
-	// Basic algo
-	// builtSegments := buildChain(n, segments, 0)
-	// fmt.Println(builtSegments)
 
 	// Get average weight
 	averageWeight := getAverageWeight(initial)
@@ -240,4 +237,97 @@ func main() {
 		fmt.Println(value.Start, "->", value.End)
 	}
 	fmt.Println("Overall built chain weight:", best.Weight)
+}
+
+func testAlgo(n int, times int) {
+	diffPercent := 15.0
+
+	var successful int
+	var averageChangeSum float64
+
+	for i := 0; i < times; i++ {
+		initial := segment.GenerateInitialMatrix(n, 10.0)
+		segments := segment.GenerateMatrix(initial)
+
+		// Get average weight
+		averageWeight := getAverageWeight(initial)
+
+		// Build with average
+		var builtSegments []*segment.Segment
+		for i := 0; i < len(segments); i++ {
+			builtSegments = buildChainByAverage(n, segments, i, averageWeight)
+
+			if builtSegments == nil {
+				continue
+			} else {
+				break
+			}
+		}
+
+		var timeOverall float64
+		for _, value := range builtSegments {
+			timeOverall += value.Weight
+		}
+
+		// Build full traversal
+		best := &BestSegment{}
+		for i := 0; i < len(segments); i++ {
+			buildChainFullTraversal(n, segments, best, i)
+		}
+
+		// Check if close to opt
+		change := percentageChange(best.Weight, timeOverall)
+		
+		if (change >= 0) && (change <= diffPercent) {
+			successful++
+		}
+
+		averageChangeSum += change
+	}
+
+	fmt.Println("Average change is:", averageChangeSum / float64(times))
+	fmt.Println("Times:", times, "Successful (15%):", successful)
+	fmt.Println("Success percentage:", (float64(successful) / float64(times)) * 100.0)
+}
+
+func percentageChange(old, new float64) (delta float64) {
+	diff := float64(new - old)
+	delta = (diff / float64(old)) * 100
+	return
+}
+
+func getUserInput(prompt string) string {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print(prompt)
+	text, _ := reader.ReadString('\n')
+	text = strings.TrimSpace(text)
+	return text
+}
+
+func getIntFromUser(prompt string) int {
+	fmt.Print(prompt)
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+	input = strings.TrimSpace(input)
+	result, err := strconv.ParseFloat(input, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return int(result)
+}
+
+func main() {
+	// Size of matrix
+	n := getIntFromUser("Enter matrix size: ")
+
+	if a := getUserInput("Would you like to run testing? (y/n): "); a == "y" {
+		times := getIntFromUser("How many iterations?: ")
+		testAlgo(n, times)
+	} else {
+		outputFullReport(n)
+	}
 }
