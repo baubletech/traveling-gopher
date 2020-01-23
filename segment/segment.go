@@ -61,6 +61,27 @@ func GenerateInitialMatrix(amount int, maxWeight float64) [][]float64 {
 	return result
 }
 
+//dummy 1111 table
+func GenerateDummyInitialMatrix(amount int, maxWeight float64) [][]float64 {
+	rand.Seed(time.Now().UnixNano())
+	var result [][]float64
+	for i := 0; i < amount; i++ {
+		row := make([]float64, amount)
+		for j := 0; j < amount; j++ {
+			if j == i {
+				row[j] = -1
+			} else if j == i + 1 {
+				row[j] = 1
+			} else {
+				row[j] = GetRandom(maxWeight)
+			}
+		}
+		result = append(result, row)
+	}
+	result[amount - 1][0] = 1
+	return result
+}
+
 func ShowInitialMatrix(initalMatrix [][]float64) {
 	amount := len(initalMatrix)
 	fmt.Print("   |")
