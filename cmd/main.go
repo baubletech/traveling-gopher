@@ -1,12 +1,12 @@
 package main
 
 import (
-	"strings"
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
-	"log"
+	"strings"
 
 	"github.com/baubletech/traveling-gopher/segment"
 )
@@ -128,7 +128,7 @@ func buildChainByAverage(dotsSize int, segments []segment.Segment, start int, av
 
 	for _, value := range segLinks {
 		if value.Weight < averageWeight {
-			res, segs := checkSegment(value, append(freshSegs, value), averageWeight, dotsSize-2)
+			res, segs := checkSegment(value, append(freshSegs, value), averageWeight, dotsSize-3)
 			if res {
 				return segs
 			}
@@ -184,7 +184,7 @@ func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *Bes
 	freshSegs = append(freshSegs, seg)
 
 	for _, value := range segLinks {
-		checkSegmentFull(value, append(freshSegs, value), best, dotsSize-2)
+		checkSegmentFull(value, append(freshSegs, value), best, dotsSize-3)
 	}
 
 	return best
@@ -277,7 +277,7 @@ func testAlgo(n int, times int) {
 
 		// Check if close to opt
 		change := percentageChange(best.Weight, timeOverall)
-		
+
 		if (change >= 0) && (change <= diffPercent) {
 			successful++
 		}
@@ -285,9 +285,9 @@ func testAlgo(n int, times int) {
 		averageChangeSum += change
 	}
 
-	fmt.Println("Average change is:", averageChangeSum / float64(times))
+	fmt.Println("Average change is:", averageChangeSum/float64(times))
 	fmt.Println("Times:", times, "Successful (15%):", successful)
-	fmt.Println("Success percentage:", (float64(successful) / float64(times)) * 100.0)
+	fmt.Println("Success percentage:", (float64(successful)/float64(times))*100.0)
 }
 
 func percentageChange(old, new float64) (delta float64) {
