@@ -190,7 +190,7 @@ func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *Bes
 	return best
 }
 
-func outputFullReport(n int) {
+func outputFullReport(n int, averagePercentBound float64) {
 	initial := segment.GenerateInitialMatrix(n, 10.0)
 	segments := segment.GenerateMatrix(initial)
 
@@ -207,7 +207,7 @@ func outputFullReport(n int) {
 	// Build with average
 	var builtSegments []*segment.Segment
 	for i := 0; i < len(segments); i++ {
-		builtSegments = buildChainByAverage(n, segments, i, averageWeight)
+		builtSegments = buildChainByAverage(n, segments, i, averageWeight * averagePercentBound / 100)
 
 		if builtSegments == nil {
 			continue
@@ -239,14 +239,16 @@ func outputFullReport(n int) {
 	fmt.Println("Overall built chain weight:", best.Weight)
 }
 
-func testAlgo(n int, times int) {
+func testAlgo(n int, averagePercentBound float64, times int) {
 	diffPercent := 15.0
+	maxWeight := 10.0
+	successfulTimes := times
 
 	var successful int
 	var averageChangeSum float64
 
 	for i := 0; i < times; i++ {
-		initial := segment.GenerateInitialMatrix(n, 10.0)
+		initial := segment.GenerateInitialMatrix(n, maxWeight)
 		segments := segment.GenerateMatrix(initial)
 
 		// Get average weight
@@ -255,7 +257,7 @@ func testAlgo(n int, times int) {
 		// Build with average
 		var builtSegments []*segment.Segment
 		for i := 0; i < len(segments); i++ {
-			builtSegments = buildChainByAverage(n, segments, i, averageWeight)
+			builtSegments = buildChainByAverage(n, segments, i, averageWeight * averagePercentBound / 100)
 
 			if builtSegments == nil {
 				continue
@@ -282,12 +284,16 @@ func testAlgo(n int, times int) {
 			successful++
 		}
 
+		if (change < 0) {
+			change = 0
+			successfulTimes--
+		}
 		averageChangeSum += change
 	}
 
-	fmt.Println("Average change is:", averageChangeSum/float64(times))
-	fmt.Println("Times:", times, "Successful (15%):", successful)
-	fmt.Println("Success percentage:", (float64(successful)/float64(times))*100.0)
+	fmt.Println("Average change is:", averageChangeSum/float64(successfulTimes))
+	fmt.Println("Times:", successfulTimes, "Successful (15%):", successful)
+	fmt.Println("Success percentage:", (float64(successful)/float64(successfulTimes))*100.0)
 }
 
 func percentageChange(old, new float64) (delta float64) {
@@ -305,6 +311,10 @@ func getUserInput(prompt string) string {
 }
 
 func getIntFromUser(prompt string) int {
+	return int(getFloat64FromUser(prompt))
+}
+
+func getFloat64FromUser(prompt string) float64 {
 	fmt.Print(prompt)
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
@@ -317,17 +327,18 @@ func getIntFromUser(prompt string) int {
 		log.Fatal(err)
 	}
 
-	return int(result)
+	return result
 }
 
 func main() {
 	// Size of matrix
 	n := getIntFromUser("Enter matrix size: ")
+	bound := getFloat64FromUser("Percent of average weight bound ?: ")
 
 	if a := getUserInput("Would you like to run testing? (y/n): "); a == "y" {
 		times := getIntFromUser("How many iterations?: ")
-		testAlgo(n, times)
+		testAlgo(n, bound, times)
 	} else {
-		outputFullReport(n)
+		outputFullReport(n, bound)
 	}
 }
