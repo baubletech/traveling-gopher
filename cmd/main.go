@@ -3,18 +3,17 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/baubletech/traveling-gopher/segment"
+	"github.com/baubletech/traveling-gopher/matrix"
 )
 
 // BestSegment is a segment with minimal weight overall value
 type BestSegment struct {
 	Weight   float64
-	Segments []*segment.Segment
+	Segments []*matrix.Segment
 }
 
 func intInSlice(a int, list []int) bool {
@@ -26,7 +25,7 @@ func intInSlice(a int, list []int) bool {
 	return false
 }
 
-func buildChain(dotsSize int, segments []segment.Segment, start int) (result []*segment.Segment) {
+func buildChain(dotsSize int, segments []matrix.Segment, start int) (result []*matrix.Segment) {
 	var dots []int
 	// Get a starting segment
 	seg := &segments[start]
@@ -36,7 +35,7 @@ func buildChain(dotsSize int, segments []segment.Segment, start int) (result []*
 
 	for {
 		// Check links are enabled, break otherwise
-		var availableLinks []*segment.Segment
+		var availableLinks []*matrix.Segment
 		for _, value := range segLinks {
 			if !value.Disabled {
 				if len(dots) < (dotsSize - 1) {
@@ -83,7 +82,7 @@ func getAverageWeight(initial [][]float64) float64 {
 	return sum / float64(len(initial)*len(initial)-len(initial))
 }
 
-func isStartInSegments(segments []*segment.Segment, start int) bool {
+func isStartInSegments(segments []*matrix.Segment, start int) bool {
 	for _, v := range segments {
 		if v.Start == start {
 			return true
@@ -93,7 +92,7 @@ func isStartInSegments(segments []*segment.Segment, start int) bool {
 }
 
 // Check segment comparing to average
-func checkSegment(segment *segment.Segment, segments []*segment.Segment, averageWeight float64, n int) (bool, []*segment.Segment) {
+func checkSegment(segment *matrix.Segment, segments []*matrix.Segment, averageWeight float64, n int) (bool, []*matrix.Segment) {
 	if n <= 0 {
 		return true, segments
 	}
@@ -115,7 +114,7 @@ func checkSegment(segment *segment.Segment, segments []*segment.Segment, average
 }
 
 // Start segment check comparing to average weight
-func buildChainByAverage(dotsSize int, segments []segment.Segment, start int, averageWeight float64) (result []*segment.Segment) {
+func buildChainByAverage(dotsSize int, segments []matrix.Segment, start int, averageWeight float64) (result []*matrix.Segment) {
 	var dots []int
 	// Get a starting segment
 	seg := &segments[start]
@@ -123,7 +122,7 @@ func buildChainByAverage(dotsSize int, segments []segment.Segment, start int, av
 	//result = append(result, seg)
 	dots = append(dots, seg.Start)
 
-	var freshSegs []*segment.Segment
+	var freshSegs []*matrix.Segment
 	freshSegs = append(freshSegs, seg)
 
 	for _, value := range segLinks {
@@ -138,7 +137,7 @@ func buildChainByAverage(dotsSize int, segments []segment.Segment, start int, av
 	return nil
 }
 
-func getChainWeight(segments []*segment.Segment) (sum float64) {
+func getChainWeight(segments []*matrix.Segment) (sum float64) {
 	for _, seg := range segments {
 		sum += seg.Weight
 	}
@@ -147,7 +146,7 @@ func getChainWeight(segments []*segment.Segment) (sum float64) {
 }
 
 // Check segment using full traversal
-func checkSegmentFull(segment *segment.Segment, segments []*segment.Segment, best *BestSegment, n int) []*segment.Segment {
+func checkSegmentFull(segment *matrix.Segment, segments []*matrix.Segment, best *BestSegment, n int) []*matrix.Segment {
 	if n <= 0 {
 		// Calculate current chain weight & get back to previous call
 		weightSum := getChainWeight(segments)
@@ -172,7 +171,7 @@ func checkSegmentFull(segment *segment.Segment, segments []*segment.Segment, bes
 	return segments
 }
 
-func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *BestSegment, start int) *BestSegment {
+func buildChainFullTraversal(dotsSize int, segments []matrix.Segment, best *BestSegment, start int) *BestSegment {
 	var dots []int
 	// Get a starting segment
 	seg := &segments[start]
@@ -180,7 +179,7 @@ func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *Bes
 	//result = append(result, seg)
 	dots = append(dots, seg.Start)
 
-	var freshSegs []*segment.Segment
+	var freshSegs []*matrix.Segment
 	freshSegs = append(freshSegs, seg)
 
 	for _, value := range segLinks {
@@ -191,11 +190,11 @@ func buildChainFullTraversal(dotsSize int, segments []segment.Segment, best *Bes
 }
 
 func outputFullReport(n int, averagePercentBound float64) {
-	initial := segment.GenerateInitialMatrix(n, 10.0)
-	segments := segment.GenerateMatrix(initial)
+	initial := matrix.NewInitialMatrix(n, 10.0)
+	segments := matrix.New(initial)
 
-	segment.ShowInitialMatrix(initial)
-	segment.ShowMatrix(segments)
+	initial.Show()
+	segments.Show()
 
 	// Get average weight
 	averageWeight := getAverageWeight(initial)
@@ -205,9 +204,9 @@ func outputFullReport(n int, averagePercentBound float64) {
 	fmt.Println("Overall matrix average is:", averageWeight*float64(n-1))
 
 	// Build with average
-	var builtSegments []*segment.Segment
+	var builtSegments []*matrix.Segment
 	for i := 0; i < len(segments); i++ {
-		builtSegments = buildChainByAverage(n, segments, i, averageWeight * averagePercentBound / 100)
+		builtSegments = buildChainByAverage(n, segments, i, averageWeight*averagePercentBound/100)
 
 		if builtSegments == nil {
 			continue
@@ -248,16 +247,16 @@ func testAlgo(n int, averagePercentBound float64, times int) {
 	var averageChangeSum float64
 
 	for i := 0; i < times; i++ {
-		initial := segment.GenerateInitialMatrix(n, maxWeight)
-		segments := segment.GenerateMatrix(initial)
+		initial := matrix.NewInitialMatrix(n, maxWeight)
+		segments := matrix.New(initial)
 
 		// Get average weight
 		averageWeight := getAverageWeight(initial)
 
 		// Build with average
-		var builtSegments []*segment.Segment
+		var builtSegments []*matrix.Segment
 		for i := 0; i < len(segments); i++ {
-			builtSegments = buildChainByAverage(n, segments, i, averageWeight * averagePercentBound / 100)
+			builtSegments = buildChainByAverage(n, segments, i, averageWeight*averagePercentBound/100)
 
 			if builtSegments == nil {
 				continue
@@ -284,7 +283,7 @@ func testAlgo(n int, averagePercentBound float64, times int) {
 			successful++
 		}
 
-		if (change < 0) {
+		if change < 0 {
 			change = 0
 			successfulTimes--
 		}
@@ -319,12 +318,12 @@ func getFloat64FromUser(prompt string) float64 {
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	input = strings.TrimSpace(input)
 	result, err := strconv.ParseFloat(input, 64)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	return result
