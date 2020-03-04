@@ -13,6 +13,12 @@ type Segment struct {
 	Disabled   bool       // Is segment already processed
 }
 
+// BestSegment is a segment with minimal weight overall value
+type BestSegment struct {
+	Weight   float64
+	Segments []*Segment
+}
+
 func NewSegment(id int, start int, end int, weight ...float64) Segment {
 	segment := Segment{}
 	segment.ID = id
